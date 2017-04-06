@@ -1,15 +1,15 @@
 package main
 
 import (
-	"crypto/rsa"
-	"flag"
+	//"crypto/rsa"
+	//"flag"
 	"fmt"
-	"io/ioutil"
+	//"io/ioutil"
 	"os"
 	"strings"
 	//"log"
 	"encoding/json"
-	"errors"
+	//"errors"
 	//"github.com/dgrijalva/jwt-go"
 	//"github.com/googollee/go-socket.io"
 	"github.com/julienschmidt/httprouter"
@@ -17,7 +17,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"math/rand"
 	"net/http"
-	"strconv"
+	//"strconv"
 	"time"
 )
 
@@ -76,10 +76,11 @@ func Socketio(handler http.Handler, sioServer *socketio.Server) http.Handler {
 	return http.HandlerFunc(ourFunc)
 }
 */
-
+/*
 func postMessage(c chan string, so *socketio.Socket) {
 
 }
+*/
 /*
 func setSioHandlers(soc socketio.Socket) {
 	var c chan bool = make(chan bool)

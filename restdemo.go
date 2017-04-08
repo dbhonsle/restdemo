@@ -1,23 +1,14 @@
 package main
 
 import (
-	//"crypto/rsa"
-	//"flag"
 	"fmt"
-	//"io/ioutil"
 	"os"
 	"strings"
-	//"log"
 	"encoding/json"
-	//"errors"
-	//"github.com/dgrijalva/jwt-go"
-	//"github.com/googollee/go-socket.io"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"math/rand"
 	"net/http"
-	//"strconv"
 	"time"
 )
 
@@ -36,174 +27,6 @@ type Contact struct {
 	CreateDate time.Time `json:"createDate" bson:"createDate"`
 }
 
-//CORS support middleware
-type CorsHost struct {
-	handler http.Handler
-}
-
-func NewCorsHost(handler http.Handler) *CorsHost {
-	return &CorsHost{handler}
-}
-
-func (s *CorsHost) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if origin := r.Header.Get("Origin"); origin != "" {
-		w.Header().Set("Access-Control-Allow-Origin", origin)
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers",
-			"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-	}
-	// Stop here if its Preflighted OPTIONS request
-	if r.Method == "OPTIONS" {
-		return
-	}
-	s.handler.ServeHTTP(w, r)
-}
-/*
-// Handle Socket.io connection with middleware
-func Socketio(handler http.Handler, sioServer *socketio.Server) http.Handler {
-	ourFunc := func(w http.ResponseWriter, r *http.Request) {
-
-		path := r.URL.Path
-		// route socketio requests to the socketio handler
-		// and send everything else to the CORS handler
-		if strings.HasPrefix(path, "/socket.io/") {
-			sioServer.ServeHTTP(w, r)
-		} else {
-			handler.ServeHTTP(w, r)
-		}
-	}
-	return http.HandlerFunc(ourFunc)
-}
-*/
-/*
-func postMessage(c chan string, so *socketio.Socket) {
-
-}
-*/
-/*
-func setSioHandlers(soc socketio.Socket) {
-	var c chan bool = make(chan bool)
-
-	fmt.Println("on connection")
-	// so.Join("speedometer")
-
-	// starting a concurrent task
-	go func() {
-		ticker := time.NewTicker(time.Millisecond * 500)
-		for {
-			select {
-			case t := <-ticker.C:
-				// fmt.Println("emitimg message"+ t.String())
-				soc.Emit("asyncevent", t.String())
-			case <-c:
-				fmt.Println("disconnect message recived in concurrent goroutine")
-				ticker.Stop()
-				return
-			}
-		}
-	}()
-
-	// Emit inital speed on connection
-	soc.Emit("newspeed", "20")
-
-	soc.On("updatespeed", func(msg string) {
-
-		newspeed := rand.Intn(80)
-
-		soc.Emit("newspeed", strconv.Itoa(newspeed))
-		//so.BroadcastTo("chat", "chat message", msg)
-	})
-
-	soc.On("disconnection", func() {
-		fmt.Println("on disconnect")
-		c <- true
-	})
-}
-*/
-/*
-func verifyToken(tokenStr string) (bool, error) {
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		return verifyKey, nil
-	})
-
-	if err == nil && token.Valid {
-		return true, err
-	}
-	fmt.Println(err)
-	return false, err
-}
-*/
-
-/*
-func registerHandlers_jwt(sioServer *socketio.Server) {
-	sioServer.On("connection", func(so socketio.Socket) {
-		auth := false
-		so.On("authenticate", func(msg string) {
-			isValid, err := verifyToken(msg)
-			if isValid {
-				auth = true
-				so.Emit("authenticated")
-				setSioHandlers(so)
-			} else {
-				so.Emit("error", err.Error())
-			}
-		})
-
-		go func() {
-			time.Sleep(time.Millisecond * 15000)
-			if !auth {
-				fmt.Println("Warning ditected unauthorized connection")
-				so.Emit("disconnect", "unauthorized")
-			}
-		}()
-
-	})
-}
-
-func registerHandlers(sioServer *socketio.Server) {
-	sioServer.On("connection", func(so socketio.Socket) {
-
-		var c chan bool = make(chan bool)
-
-		fmt.Println("on connection")
-		// so.Join("speedometer")
-
-		// starting a concurrent task
-		go func() {
-			ticker := time.NewTicker(time.Millisecond * 500)
-			for {
-				select {
-				case t := <-ticker.C:
-					// fmt.Println("emitimg message"+ t.String())
-					so.Emit("asyncevent", t.String())
-				case <-c:
-					fmt.Println("disconnect message recived in concurrent goroutine")
-					ticker.Stop()
-					return
-				}
-			}
-		}()
-
-		// Emit inital speed on connection
-		so.Emit("newspeed", "20")
-
-		so.On("updatespeed", func(msg string) {
-
-			newspeed := rand.Intn(80)
-
-			so.Emit("newspeed", strconv.Itoa(newspeed))
-			//so.BroadcastTo("chat", "chat message", msg)
-		})
-
-		so.On("disconnection", func() {
-			fmt.Println("on disconnect")
-			c <- true
-		})
-
-	})
-}
-*/
 type HandleRoutes struct {
 	mgoSession *mgo.Session
 }
@@ -647,132 +470,25 @@ func GetNewSession() *mgo.Session {
 	return session
 
 }
-/*
-// var verifyKey []byte
 
-var keyString []byte
-
-var verifyKey *rsa.PublicKey
-
-// Try to find the token in an http.Request.
-// This method will call ParseMultipartForm if there's no token in the header.
-// Currently, it looks in the Authorization header as well as
-// looking for an 'access_token' request parameter in req.Form.
-func ParseFromRequest(req *http.Request, keyFunc jwt.Keyfunc) (token *jwt.Token, err error) {
-
-	// Look for an Authorization header
-	if ah := req.Header.Get("Authorization"); ah != "" {
-		// Should be a bearer token
-		if len(ah) > 6 && strings.ToUpper(ah[0:7]) == "BEARER " {
-			return jwt.Parse(ah[7:], keyFunc)
-		}
-	}
-
-	// Look for "access_token" parameter
-	req.ParseMultipartForm(10e6)
-	if tokStr := req.Form.Get("access_token"); tokStr != "" {
-		return jwt.Parse(tokStr, keyFunc)
-	}
-
-	return nil, errors.New("no token present in request")
-
-}
-*/
-/*
-func Authorize(h httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		// validate the token
-		token, err := ParseFromRequest(r, func(token *jwt.Token) (interface{}, error) {
-			return verifyKey, nil
-		})
-		if err == nil && token.Valid {
-			h(w, r, ps)
-			return
-		}
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprint(w, "Authentication failed")
-	}
-}
-*/
-/*
-func Authorize(h httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		bearerToken := r.Header.Get("Authorization")
-
-		tokenString := strings.Split(bearerToken, " ")[1]
-
-		tokenString = strings.TrimSpace(tokenString)
-
-		// validate the token
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return verifyKey, nil
-		})
-		if err == nil && token.Valid {
-			h(w, r, ps)
-			return
-		}
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprint(w, "Authentication failed")
-	}
-}
-*/
-
-func Protected(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Fprint(w, "Protected!\n")
-}
-/*
-var (
-	httpAddr = flag.String("http", ":8080", "Listen address")
-)
-*/
 func main() {
-	//var err error
 
-	//flag.Parse()
-/*
-	//verifyKey = []byte("jwt demo")
-	keyString, err = ioutil.ReadFile("jwtrsa.pub")
-
-	if err != nil {
-		panic(err)
-	}
-
-	verifyKey, err = jwt.ParseRSAPublicKeyFromPEM(keyString)
-
-	if err != nil {
-		panic(err)
-	}
-
-	sioServer, _ := socketio.NewServer(nil)
-
-	registerHandlers_jwt(sioServer)
-*/
 	r := httprouter.New()
 
 	hr := NewHandleRoutes(GetNewSession())
 
-	r.GET("/contacts", Authorize(hr.GetContacts))
+	r.GET("/contacts", hr.GetContacts)
 
-	r.GET("/contacts/:id", Authorize(hr.GetContact))
+	r.GET("/contacts/:id", hr.GetContact)
 
-	r.POST("/contacts", Authorize(hr.PostContact))
+	r.POST("/contacts", hr.PostContact)
 
-	r.PUT("/contacts/:id", Authorize(hr.UpdateContact))
+	r.PUT("/contacts/:id", hr.UpdateContact)
 
-	r.DELETE("/contacts/:id", Authorize(hr.RemoveContact))
-
-	r.GET("/protected/", Authorize(Protected))
-/*
-	corsHost := NewCorsHost(r)
-*/
-/*
-	corsHost := NewCorsHost(Socketio(r, sioServer))
-*/
-	//http.ListenAndServe(*httpAddr, corsHost)
+	r.DELETE("/contacts/:id", hr.RemoveContact)
 
 	http.ListenAndServe(":8080", r)
 
-	//http.ListenAndServe(*httpAddr, Socketio(corsHost, sioServer))
-
 }
+
 
